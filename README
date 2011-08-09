@@ -2,5 +2,5 @@
 
 Код вставки счётчика
 <script>// tv_window
-( new Image() ).src = 'http://www.art-plakat.ru/cgi-bin/tv_window/people_request.pl?rnd='+ Math.round(Math.random() * 9999999) +'&r='+ encodeURIComponent(document.referrer);
+( new Image() ).src = 'http://www.your_site.ru/cgi-bin/tv_window/people_request.pl?rnd='+ Math.round(Math.random() * 9999999) +'&r='+ encodeURIComponent(document.referrer);
 </script>
