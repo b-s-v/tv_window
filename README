@@ -1,1 +1,6 @@
 Здесь напишем как устанавливать наш скрипт и его интерфейс, как плодить таблички и какие и где должны быть обозначены права
+
+Код вставки счётчика
+<script>// tv_window
+( new Image() ).src = 'http://www.art-plakat.ru/cgi-bin/tv_window/people_request.pl?rnd='+ Math.round(Math.random() * 9999999) +'&r='+ encodeURIComponent(document.referrer);
+</script>
