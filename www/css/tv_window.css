@@ -1,0 +1,259 @@
+.homePromoBlock {
+    background-color: #484E51;
+    border-radius: 10px 10px 10px 10px;
+    left: 5%;
+    position: relative;
+    width: 90%;
+}
+.homePromoStat {
+    padding: 0 20px 2em;
+}
+.homePromoStat h1 {
+    color: #FFFFFF;
+    font-size: 200%;
+    margin: 0.7em 0 0.6em;
+}
+.homePromoStat small {
+    color: #FFFFFF;
+    font-size: 75%;
+    line-height: 1.5em;
+}
+.homeStat {
+    padding: 1em 0 0;
+    position: relative;
+    width: 100%;
+}
+.homeStat strong {
+    color: #FFFFFF;
+    font-size: 70%;
+}
+.homeStat .lineBlock {
+    left: 3.6em;
+    position: absolute;
+    top: 1em;
+    width: 70%;
+}
+.homeStat .lineBlock .line {
+    background-color: #AEC82D;
+    height: 0.9em;
+    position: relative;
+}
+.homeStat .lineBlock .count {
+    color: #FFFFFF;
+    font-size: 70%;
+    margin-left: 10px;
+    position: absolute;
+    top: 0;
+    white-space: nowrap;
+}
+.homePromoTv {
+    padding: 10px;
+}
+.homeTvBlock {
+    background-color: #FFFFFF;
+    position: relative;
+    width: 100%;
+}
+.homeTvBlock .tvBlock .lt, .homeTvBlock .tvBlock .rt, .homeTvBlock .tvBlock .rb, .homeTvBlock .tvBlock .lb {
+    background-color: #484E51;
+}
+
+.homeTvBlock
+{
+	width:100%;
+	background-color: #fff;
+	position: relative;
+}
+
+.homeTvBlock .tvBlock .lt,
+.homeTvBlock .tvBlock .rt,
+.homeTvBlock .tvBlock .rb,
+.homeTvBlock .tvBlock .lb
+{
+	background-color: #484e51;
+}
+
+.homeZadmin
+{
+	color:#b6b8b9;
+	margin: 0.2em 45px;
+	padding:0;
+	font-size:90%;
+	line-height: 1.4em;
+	position: relative;
+}
+
+.homeZadmin a{color:#b6b8b9;}
+.homeZadmin a:hover{color:#fff;}
+
+.homeHeart
+{
+	position: absolute;
+	left:-25px;
+	top:0.4em;
+}
+
+.homeTvText
+{
+	position: relative;
+	margin: 2.2em 0 1em 20px;
+}
+
+.homeTvText h4
+{
+	position: relative;
+	z-index: 10;
+	background-color: #484e51;
+	display: inline;
+	padding-right:10px;
+	color:#fff;
+	font-size:75%;
+}
+
+.homeTvText p
+{
+	color:#fff;
+	font-size:70%;
+	margin-right:45px;
+}
+
+.homeTvText .line
+{
+	width:100%;
+	height:1px;
+	padding:0;
+	margin:0;
+	background-color: #7f8386;
+	position: absolute;
+	left:0;
+	top:0.45em;
+	overflow: hidden;
+	z-index: 5;
+}
+
+.homeStatLink,
+.homeStatLink:hover
+{
+	display: block;
+	color:#fff;
+	font-size: 70%;
+	margin: 0 0 0 20px;
+	padding: 0.5em 14px;
+	background: url('/i/stat_ico.gif') no-repeat left 0.6em;
+}
+.tvBlockContent {
+    height: 270px;
+    overflow: hidden;
+    position: relative;
+}
+.tvBlockList {
+    margin: -66px 0 0;
+    padding: 0 0 0 20px;
+    position: relative;
+}
+#block .reqLine {
+    display: block;
+    margin: 0;
+    overflow: hidden;
+    padding: 0.4em 0 0 25px;
+    position: relative;
+    text-indent: 0;
+}
+.reqText {
+    color: #333333;
+    font-size: 13px;
+    padding: 0;
+    position: relative;
+}
+.reqEmpty {
+    font-size: 13px;
+    left: 25px;
+    position: absolute;
+    top: 5px;
+}
+.ico_y, .ico_g, .ico_m, .ico_r {
+    height: 16px;
+    left: 0;
+    position: absolute;
+    top: 0.5em;
+    width: 16px;
+    z-index: 5;
+}
+.ico_y {
+    background: url("/i/yandex.gif") no-repeat scroll left top transparent;
+}
+.ico_g {
+    background: url("/i/google.gif") no-repeat scroll left top transparent;
+}
+.ico_m {
+    background: url("/i/mail.gif") no-repeat scroll left top transparent;
+}
+.ico_r {
+    background: url("/i/rambler.gif") no-repeat scroll left top transparent;
+}
+.tvBlock .lt, .tvBlock .rt, .tvBlock .rb, .tvBlock .lb {
+    background-image: url("/i/round.png");
+    background-repeat: no-repeat;
+    height: 14px;
+    overflow: hidden;
+    position: absolute;
+    width: 14px;
+    z-index: 10;
+}
+.tvBlock .lt {
+    background-position: 0 0;
+    left: 0;
+    top: 0;
+}
+.tvBlock .rt {
+    background-position: 0 -14px;
+    right: 0;
+    top: 0;
+}
+.tvBlock .rb {
+    background-position: 0 -28px;
+    bottom: 0;
+    right: 0;
+}
+.tvBlock .lb {
+    background-position: 0 -42px;
+    bottom: 0;
+    left: 0;
+}
+.tvBlock .t, .tvBlock .b {
+    background: url("/i/v.png") repeat scroll left top transparent;
+    left: 0;
+    overflow: hidden;
+    position: absolute;
+    width: 100%;
+    z-index: 5;
+}
+.tvBlock .t {
+    background-position: 0 -6px;
+    height: 12px;
+    top: 0;
+}
+.tvBlock .b {
+    background-position: 0 0;
+    bottom: 0;
+    height: 6px;
+}
+.tvBlock .l, .tvBlock .r {
+    background-image: url("/i/g.gif");
+    background-repeat: repeat-y;
+    height: 100%;
+    overflow: hidden;
+    position: absolute;
+    top: 0;
+    z-index: 5;
+}
+.tvBlock .l {
+    background-position: -9px 0;
+    left: 0;
+    width: 9px;
+}
+.tvBlock .r {
+    background-position: 0 0;
+    right: 0;
+    width: 9px;
+}
