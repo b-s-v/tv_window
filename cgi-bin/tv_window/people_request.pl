@@ -3,6 +3,8 @@
 use strict;
 use CGI qw(:cgi);
 use FindBin qw($Bin);
+use lib "$Bin/lib";
+#use CGI::Carp 'fatalsToBrowser';
 
 our $_store = undef;
 
@@ -11,6 +13,7 @@ my $lmod     = $q->{'lmod'};
 my $referrer = $q->{'r'}    || 0;
 my $ajax     = $q->{'ajax'} || 0;
 my $request  = '';
+$lmod = int $lmod if $lmod;
 
 # OUTSIDE
 if ( $referrer ) {
@@ -26,9 +29,13 @@ if ( $referrer ) {
 }
 
 # INSIDE
-if ( defined $lmod ) {
+elsif ( defined $lmod ) {
    my $inside = Inside->new( {ajax => $ajax, lmod => $lmod} );
    $inside->send();
+}
+else {
+   print "Content-type: text/plain; charset=utf-8\n\n";
+   print 'empty';
 }
 
 
@@ -36,8 +43,9 @@ if ( defined $lmod ) {
 
 
 ################# CONFIG #######################
-sub CONFIG_PATH {"$Bin/../etc/tv_window.conf"}
-########################################
+sub CONFIG_PATH {"$Bin/etc/tv_window.conf"}
+
+##########################
 sub _read_config {
    my $fname = shift;
    open my $fh, "<", $fname or die "failed to read config $fname: $!";
@@ -45,14 +53,16 @@ sub _read_config {
       chomp;
       s/(?<!\\)#.*//g;
       next if /^\s*$/;
+      next unless /\=/;
       my ($k, $v) = split '=', $_, 2;
       next unless $k =~ /./ && $v =~ /./;
       $_ =~ s/^\s*|\s*$//g for ($k, $v);
       $_store->{$k} = $v;
    } # while
+   close $fh or die $!;
 }
 
-########################################
+##########################
 sub config {
    my $opt_name = shift;
 
@@ -74,7 +84,10 @@ package AObject;
 
 use strict;
 use DBI;
+use Convert::Cyrillic;
+#use CGI::Carp 'fatalsToBrowser';
 
+##########################
 sub new {
    my $class = shift;
    my $self = bless {
@@ -100,6 +113,7 @@ sub new {
    return $self;
 }
 
+##########################
 sub _init {
    my $self = shift;
 
@@ -120,6 +134,7 @@ sub _init {
       or die $sth->errstr;
 }
 
+##########################
 sub change_encoding {
    my $self = shift;
    my $c    = shift;
@@ -143,14 +158,16 @@ sub change_encoding {
    return $c;
 }
 
+##########################
 sub dbh {
    my $self = shift;
    return $self->{_dbh};
 }
 
+##########################
 sub DESTROY {
    my $self = shift;
-   $self->dbh->disconnect;
+   $self->dbh->disconnect if ref $self->dbh;
 }
 
 1;
@@ -165,15 +182,17 @@ use base qw(AObject);
 use strict;
 use Data::Dumper qw(Dumper);
 
+##########################
 sub _init {
    my $self = shift;
 
    $self->SUPER::_init;
 
-   $self->{ num_request } = 14;
+   $self->{ num_request } = 11;
    $self->{ num_request } = 3 if $self->{input}{lmod};
 }
 
+##########################
 sub send {
    my $self = shift;
 
@@ -185,6 +204,7 @@ sub send {
 
 }
 
+##########################
 sub _get_data {
    my $self = shift;
    my $data = {};
@@ -193,6 +213,7 @@ sub _get_data {
    return $data;
 }
 
+##########################
 sub _get_searcher_stat {
    my $self = shift;
    my %searcher_stat = ();
@@ -200,8 +221,8 @@ sub _get_searcher_stat {
 SELECT searcher, stat
 FROM tv_window_searcher_stat
    !;
-   my $sth = $self->dbh->prepare($query);
-   $sth->execute;
+   my $sth = $self->dbh->prepare($query) || die 'Dont connect to mysql: '. $self->dbh->errstr .'. '. $query;
+   $sth->execute || die 'Dont connect to mysql: '. $self->dbh->errstr .'. '. $query;
 
    my $summ = 0;
    while ( my ($searcher, $stat) = $sth->fetchrow_array ) {
@@ -214,6 +235,7 @@ FROM tv_window_searcher_stat
    return \%searcher_stat;
 }
 
+##########################
 sub _get_request {
    my $self = shift;
    my @request = ();
@@ -225,14 +247,14 @@ FROM tv_window
    if ($self->{ num_request } == 3) {
       $query .= qq! WHERE id > ? ORDER BY id DESC LIMIT $self->{ num_request }!;
       #warn "[$query] [$self->{input}{lmod}]";
-      $sth = $self->dbh->prepare($query);
-      $sth->execute($self->{input}{lmod});
+      $sth = $self->dbh->prepare($query) || die 'Dont connect to mysql: '. $self->dbh->errstr .'. '. $query;
+      $sth->execute($self->{input}{lmod}) || die 'Dont connect to mysql: '. $self->dbh->errstr .'. '. $query;
    }
    else {
       $query .= qq!              ORDER BY id DESC LIMIT $self->{ num_request }!;
       #warn "[$query]";
-      $sth = $self->dbh->prepare($query);
-      $sth->execute();
+      $sth = $self->dbh->prepare($query) || die 'Dont connect to mysql: '. $self->dbh->errstr .'. '. $query;
+      $sth->execute() || die 'Dont connect to mysql: '. $self->dbh->errstr .'. '. $query;
    }
 
    while ( my ($id, $searcher, $request, $date) = $sth->fetchrow_array ) {
@@ -248,6 +270,7 @@ FROM tv_window
    return \@request;
 }
 
+##########################
 sub _create_xml {
    my $self = shift;
    my $data = shift;
@@ -322,9 +345,18 @@ CREATE TABLE tv_window_searcher_stat (
    stat     int(10),
    UNIQUE  (searcher)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8
+
+
+CREATE TABLE tv_window_mark_cleaning (
+   tbl_name   text NOT NULL,
+   clean_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+   UNIQUE    (tbl_name(10))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
+
 =cut
 
 
+##########################
 sub save {
    my $self = shift;
 
@@ -332,32 +364,42 @@ sub save {
    $self->_save_searcher_stat;
 
 
-   #$self->_clean_request if main::config( 'auto_clean' );
+   $self->_clean_request if main::config( 'auto_clean' );
+	$self->_clean_stat;
+
+   print "Content-type: text/plain; charset=utf-8\n\n";
+   print 'save';
 }
 
+##########################
 sub _save_request {
    my $self = shift;
    my $query = qq!INSERT tv_window (searcher, request) VALUES(?,?)!;
    my $sth = $self->dbh->prepare( $query )
-      or die $self->dbh->errstr;
+      || die 'Dont connect to mysql: '. $self->dbh->errstr .'. '. $query;
 
-   #warn "_save_request: request [$self->{ request  }]";
+   warn "_save_request: request [$self->{ request  }]";
 
    $sth->execute(
       $self->{ searcher_dict}->{ $self->{ searcher } }{ id },
       $self->{ request  },
-   ) or die $sth->errstr;
+   ) || die 'Dont connect to mysql: '. $self->dbh->errstr .'. '. $query;
 }
 
 
+##########################
 sub _save_searcher_stat {
    my $self = shift;
+   my ($searcher_id, $count) = @_;
 
    # get exists searcher stat
-   my $searcher_stat = $self->_get_exists_searcher_stat();
-   $searcher_stat->{
-      $self->{ searcher_dict}->{ $self->{ searcher } }{ id }
-   }++;
+   unless ( $searcher_id && $count ) {
+      $searcher_id = $self->{ searcher_dict }->{ $self->{ searcher } }{ id };
+      $count       = 1;
+
+      my $searcher_stat = $self->_get_exists_searcher_stat();
+      $count           += $searcher_stat->{ $searcher_id };
+   }
 
    # save searcher stat
    my $query = qq!
@@ -366,27 +408,24 @@ VALUES(?,?)
 ON DUPLICATE KEY UPDATE stat = ?
    !;
    my $sth = $self->dbh->prepare( $query )
-      or die $self->dbh->errstr;
+      || die 'Dont connect to mysql: '. $self->dbh->errstr .'. '. $query;
 
    $sth->execute(
-      $self->{ searcher_dict }->{ $self->{ searcher } }{ id },
-      $searcher_stat->{
-         $self->{ searcher_dict }->{ $self->{ searcher } }{ id }
-      },
-      $searcher_stat->{
-         $self->{ searcher_dict }->{ $self->{ searcher } }{ id }
-      },
-   ) or die $sth->errstr;
+      $searcher_id,
+      $count,
+      $count,
+   ) || die 'Dont connect to mysql: '. $sth->errstr .'. '. $query;
 
 }
 
+##########################
 sub _get_exists_searcher_stat {
    my $self = shift;
    my $searcher_stat = {};
 
    my $query = qq!SELECT searcher, stat FROM tv_window_searcher_stat!;
-   my $sth = $self->dbh->prepare($query);
-   $sth->execute;
+   my $sth = $self->dbh->prepare($query) || die 'Dont connect to mysql: '. $self->dbh->errstr .'. '. $query;
+   $sth->execute || die 'Dont connect to mysql: '. $self->dbh->errstr .'. '. $query;
 
    while ( my ($searcher, $stat) = $sth->fetchrow_array ) {
       $searcher_stat->{ $searcher } = $stat;
@@ -396,6 +435,7 @@ sub _get_exists_searcher_stat {
    return $searcher_stat;
 }
 
+##########################
 sub _init {
    my $self = shift;
 
@@ -407,6 +447,7 @@ sub _init {
    $self->{ request  } = $request;
 }
 
+##########################
 sub _parse_referrer {
    my $self = shift;
    my ($s, $r) = ('','');
@@ -438,6 +479,7 @@ sub _parse_referrer {
    return $s, $r;
 }
 
+##########################
 sub _clean_request {
    my $self = shift;
 
@@ -448,12 +490,90 @@ AND id < (
    SELECT max(id) FROM tv_window
 ) - ?
    !;
-   my $sth = $self->dbh->prepare($query);
-   $sth->execute( main::config( 'offset' ) );
+   my $sth = $self->dbh->prepare($query) || die 'Dont connect to mysql: '. $self->dbh->errstr .'. '. $query;
+   $sth->execute( main::config( 'offset' ) ) || die 'Dont connect to mysql: '. $self->dbh->errstr .'. '. $query;
 
 }
 
+##########################
+sub _clean_stat {
+   my $self = shift;
 
+   # check time
+   my $hour = (localtime)[2];
+   return if $hour != 0;
 
+   # check date of clean
+   my $day = sprintf '%02d', (localtime)[3];
+   my $date_clean = $self->__check_date_of_clean();
+   return if !$date_clean || $date_clean != /^\d\d\d\d-\d\d\-$day/;
+
+   # clean stat
+   $self->__clean_stat();
+
+   # count for today
+   my $date_count = $self->__count_for_today();
+
+   # save stat by today
+   $self->_save_searcher_stat( $_, $date_count->{ $_ } )
+      foreach keys %$date_count;
+
+   # mark clean
+   $self->__mark_clean_stat();
+}
+
+##################
+sub __check_date_of_clean {
+   my $self = shift;
+   my $query_check = qq!SELECT clean_date FROM tv_window_mark_cleaning WHERE table = 'stat'!;
+   my $sth = $self->dbh->prepare( $query_check )
+      || die 'Dont connect to mysql: '. $self->dbh->errstr .'. '. $query_check;
+   $sth->execute()
+      || die 'Dont connect to mysql: '. $sth->errstr       .'. '. $query_check;
+   my $date_clean = $sth->fetchrow_array;
+   $sth->finish();
+   return $date_clean;
+}
+
+##################
+sub __clean_stat {
+   my $self = shift;
+   my $query_clean = qq!DELETE FROM tv_window_searcher_stat!;
+   my $sth = $self->dbh->prepare( $query_clean )
+      || die 'Dont connect to mysql: '. $self->dbh->errstr .'. '. $query_clean;
+   $sth->execute()
+      || die 'Dont connect to mysql: '. $sth->errstr       .'. '. $query_clean;
+   $sth->finish();
+}
+
+##################
+sub __count_for_today {
+   my $self = shift;
+   my $query_count = qq!SELECT count(*), searcher FROM tv_window t GROUP BY searcher!;
+   my $sth = $self->dbh->prepare($query_count)
+      || die 'Dont connect to mysql: '. $self->dbh->errstr .'. '. $query_count;
+   $sth->execute()
+      || die 'Dont connect to mysql: '. $sth->errstr       .'. '. $query_count;
+   my $date_count = {};
+   while (my ($seacher_count, $searcher_id) = $sth->fetchrow_array) {
+      $date_count->{ $searcher_id } = $seacher_count;
+   }
+   $sth->finish();
+   return $date_count;
+}
+
+##################
+sub __mark_clean_stat {
+   my $self = shift;
+   my $query_mark  = qq!
+INSERT INTO tv_window_mark_cleaning (table, clean_date)
+VALUES(stat, NOW())
+ON DUPLICATE KEY UPDATE clean_date = NOW()
+   !;
+   my $sth = $self->dbh->prepare($query_mark)
+      || die 'Dont connect to mysql: '. $self->dbh->errstr .'. '. $query_mark;
+   $sth->execute()
+      || die 'Dont connect to mysql: '. $sth->errstr       .'. '. $query_mark;
+}
 
 1;

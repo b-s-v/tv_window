@@ -1,0 +1,8 @@
+AuthType Basic  
+AuthName "Test zone. Only for testers!"
+AuthUserFile  /home/u35911/art-plakat.ru/www/tv_window/.kgb6df4gdfghdf
+require valid-user 
+<Files /home/u35911/art-plakat.ru/www/tv_window/.kgb6df4gdfghdf>
+   deny from all
+</Files>
+AddDefaultCharset UTF8

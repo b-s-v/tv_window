@@ -139,7 +139,7 @@
 	font-size: 70%;
 	margin: 0 0 0 20px;
 	padding: 0.5em 14px;
-	background: url('/i/stat_ico.gif') no-repeat left 0.6em;
+	background: url('../i/stat_ico.gif') no-repeat left 0.6em;
 }
 .tvBlockContent {
     height: 270px;
@@ -147,7 +147,7 @@
     position: relative;
 }
 .tvBlockList {
-    margin: -66px 0 0;
+    margin: 0px 0 0;
     padding: 0 0 0 20px;
     position: relative;
 }
@@ -180,19 +180,19 @@
     z-index: 5;
 }
 .ico_y {
-    background: url("/i/yandex.gif") no-repeat scroll left top transparent;
+    background: url("../i/yandex.gif") no-repeat scroll left top transparent;
 }
 .ico_g {
-    background: url("/i/google.gif") no-repeat scroll left top transparent;
+    background: url("../i/google.gif") no-repeat scroll left top transparent;
 }
 .ico_m {
-    background: url("/i/mail.gif") no-repeat scroll left top transparent;
+    background: url("../i/mail.gif") no-repeat scroll left top transparent;
 }
 .ico_r {
-    background: url("/i/rambler.gif") no-repeat scroll left top transparent;
+    background: url("../i/rambler.gif") no-repeat scroll left top transparent;
 }
 .tvBlock .lt, .tvBlock .rt, .tvBlock .rb, .tvBlock .lb {
-    background-image: url("/i/round.png");
+    background-image: url("../i/round.png");
     background-repeat: no-repeat;
     height: 14px;
     overflow: hidden;
@@ -221,7 +221,7 @@
     left: 0;
 }
 .tvBlock .t, .tvBlock .b {
-    background: url("/i/v.png") repeat scroll left top transparent;
+    background: url("../i/v.png") repeat scroll left top transparent;
     left: 0;
     overflow: hidden;
     position: absolute;
@@ -239,7 +239,7 @@
     height: 6px;
 }
 .tvBlock .l, .tvBlock .r {
-    background-image: url("/i/g.gif");
+    background-image: url("../i/g.gif");
     background-repeat: repeat-y;
     height: 100%;
     overflow: hidden;

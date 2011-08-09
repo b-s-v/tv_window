@@ -104,6 +104,7 @@ function appendTerm(se, term, count_terms) {
 
     line_text.innerHTML  = '&#160;';
     line_text2.innerHTML = term;
+    line_text2.title     = term;
 
     if(!getAllterm && delSet) {
        if($("#block > li").length > 14) {
