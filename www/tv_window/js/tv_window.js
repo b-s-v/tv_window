@@ -45,7 +45,7 @@ function loadXMLDoc(url) {
 
 function getStats() {
     if (__admin__ == true)
-        loadXMLDoc('/cgi-bin/people_request.pl?nocahe='+Math.random()+'&lmod='+last_mod+'&f='+Math.random());
+        loadXMLDoc('/cgi-bin/tv_window/people_request.pl?nocahe='+Math.random()+'&lmod='+last_mod+'&f='+Math.random());
     setTimeout('getStats()', 5000);
 }
 
