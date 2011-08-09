@@ -378,7 +378,7 @@ sub _save_request {
    my $sth = $self->dbh->prepare( $query )
       || die 'Dont connect to mysql: '. $self->dbh->errstr .'. '. $query;
 
-   warn "_save_request: request [$self->{ request  }]";
+   #warn "_save_request: request [$self->{ request  }]";
 
    $sth->execute(
       $self->{ searcher_dict}->{ $self->{ searcher } }{ id },
