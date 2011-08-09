@@ -463,6 +463,7 @@ sub _parse_referrer {
       $referrer =~ /$_/
    } keys %{ $self->{ searcher_dict } };
    #warn "searcher [$s]\n";
+   return $s, $r unless $s;
 
 
    # search REQUEST
