@@ -188,7 +188,7 @@ sub _init {
 
    $self->SUPER::_init;
 
-   $self->{ num_request } = 11;
+   $self->{ num_request } = 14;
    $self->{ num_request } = 3 if $self->{input}{lmod};
 }
 
@@ -475,6 +475,7 @@ sub _parse_referrer {
    #$r = Encode::decode('utf8', $r);# Encode::_utf8_off($r);# Encode::decode('cp1251', $r);
    #utf8::decode( $r );
    $r = $self->change_encoding( $r, 'utf8' );
+   $r =~ s/\+/ /g;
    #warn "r [$r] s [$s]\n";
 
    return $s, $r;
