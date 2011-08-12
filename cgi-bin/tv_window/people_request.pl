@@ -19,7 +19,8 @@ $lmod = int $lmod if $lmod;
 if ( $referrer ) {
    my $outside = Outside->new( $referrer );
    $request = $outside->{ request };
-   my $r = $outside->save()
+   my $r = 0;
+   $r = $outside->save()
       if $outside->{ request } && $outside->{ searcher }
    ;
    print "Content-type: text/plain; charset=utf-8\n\n";
@@ -364,8 +365,8 @@ sub save {
    $self->_save_searcher_stat;
 
 
-   $self->_clean_request if main::config( 'auto_clean' );
-	$self->_clean_stat;
+   $self->_clean_request;
+   $self->_clean_stat if main::config( 'auto_clean' );
 
    print "Content-type: text/plain; charset=utf-8\n\n";
    print 'save';
@@ -381,7 +382,7 @@ sub _save_request {
    #warn "_save_request: request [$self->{ request  }]";
 
    $sth->execute(
-      $self->{ searcher_dict}->{ $self->{ searcher } }{ id },
+      $self->{ searcher_dict }->{ $self->{ searcher } }{ id },
       $self->{ request  },
    ) || die 'Dont connect to mysql: '. $self->dbh->errstr .'. '. $query;
 }
@@ -391,6 +392,13 @@ sub _save_request {
 sub _save_searcher_stat {
    my $self = shift;
    my ($searcher_id, $count) = @_;
+   return 0
+      if !$searcher_id &&
+         !(
+            grep {
+               $_ eq $self->{ searcher }
+            } keys %{ $self->{ searcher_dict } }
+         );
 
    # get exists searcher stat
    unless ( $searcher_id && $count ) {
@@ -484,17 +492,27 @@ sub _parse_referrer {
 ##########################
 sub _clean_request {
    my $self = shift;
+   warn "_clean_request";
+
+   my $query_max = qq!SELECT max(id) FROM tv_window!;
+   my $sth_max = $self->dbh->prepare($query_max)
+      || die 'Dont connect to mysql: '. $self->dbh->errstr .'. '. $query_max;
+   $sth_max->execute()
+      || die 'Dont connect to mysql: '. $self->dbh->errstr .'. '. $query_max;
+   my $max_id = $sth_max->fetchrow_array;
+   $sth_max->finish;
+   return unless $max_id;
 
    my $query = qq!
 DELETE FROM tv_window
 WHERE date < DATE_SUB(NOW(), INTERVAL 12 HOUR)
-AND id < (
-   SELECT max(id) FROM tv_window
-) - ?
+AND id < (? - ?)
    !;
-   my $sth = $self->dbh->prepare($query) || die 'Dont connect to mysql: '. $self->dbh->errstr .'. '. $query;
-   $sth->execute( main::config( 'offset' ) ) || die 'Dont connect to mysql: '. $self->dbh->errstr .'. '. $query;
-
+   my $sth = $self->dbh->prepare($query)
+      || die 'Dont connect to mysql: '. $self->dbh->errstr .'. '. $query;
+   $sth->execute( $max_id, main::config( 'offset' ) )
+      || die 'Dont connect to mysql: '. $self->dbh->errstr .'. '. $query;
+   $sth->finish;
 }
 
 ##########################
@@ -504,11 +522,12 @@ sub _clean_stat {
    # check time
    my $hour = (localtime)[2];
    return if $hour != 0;
+   warn "_clean_stat";
 
    # check date of clean
    my $day = sprintf '%02d', (localtime)[3];
    my $date_clean = $self->__check_date_of_clean();
-   return if !$date_clean || $date_clean != /^\d\d\d\d-\d\d\-$day/;
+   return if !$date_clean || $date_clean =~ /^\d\d\d\d-\d\d\-$day/;
 
    # clean stat
    $self->__clean_stat();
