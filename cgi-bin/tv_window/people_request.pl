@@ -5,6 +5,20 @@ use CGI qw(:cgi);
 use FindBin qw($Bin);
 use lib "$Bin/lib";
 #use CGI::Carp 'fatalsToBrowser';
+use Getopt::Std;
+
+# Cleaning
+our %opts = ();
+getopts('c',\%opts);
+
+if ( $opts{ c } ) {
+   Cleaning->new->run();
+
+   exit;
+}
+
+
+
 
 our $_store = undef;
 
@@ -319,7 +333,7 @@ sub _create_xml {
 1;
 
 ################### Outside #####################
-# реагирует на запросы, записывает в базу запросы и поисковики, ведёт статистику (тоже в базе), удаляет из базы устаревшие на 10 минут и с id меньше последнего на 20
+# реагирует на запросы, записывает в базу запросы и поисковики, ведёт статистику (тоже в базе)
 package Outside;                                         # DONE
 use base qw(AObject);
 
@@ -348,6 +362,7 @@ CREATE TABLE tv_window_searcher_stat (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8
 
 
+# not need
 CREATE TABLE tv_window_mark_cleaning (
    tbl_name   text NOT NULL,
    clean_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -364,9 +379,6 @@ sub save {
    $self->_save_request;
    $self->_save_searcher_stat;
 
-
-   $self->_clean_request;
-   $self->_clean_stat if main::config( 'auto_clean' );
 
    print "Content-type: text/plain; charset=utf-8\n\n";
    print 'save';
@@ -489,10 +501,34 @@ sub _parse_referrer {
    return $s, $r;
 }
 
+
+1;
+
+
+
+
+################### Cleaning #####################
+# Запускается по крону в 01-00, удаляет из базы устаревшие на 24 часа и с id меньше последнего на 20 рефереры и чистит таблицу статистики, если есть флаг в файле конфигурации
+package Cleaning;                                         # DONE
+use base qw(AObject);
+
+use strict;
+use Data::Dumper qw(Dumper);
+
+
+
+##########################
+sub run {
+   my $self = shift;
+
+   $self->_clean_request;
+   $self->_clean_stat if main::config( 'auto_clean' );
+}
+
 ##########################
 sub _clean_request {
    my $self = shift;
-   warn "_clean_request";
+   #warn "_clean_request";
 
    my $query_max = qq!SELECT max(id) FROM tv_window!;
    my $sth_max = $self->dbh->prepare($query_max)
@@ -505,7 +541,7 @@ sub _clean_request {
 
    my $query = qq!
 DELETE FROM tv_window
-WHERE date < DATE_SUB(NOW(), INTERVAL 12 HOUR)
+WHERE date < DATE_SUB(NOW(), INTERVAL 24 HOUR)
 AND id < (? - ?)
    !;
    my $sth = $self->dbh->prepare($query)
@@ -520,14 +556,15 @@ sub _clean_stat {
    my $self = shift;
 
    # check time
-   my $hour = (localtime)[2];
-   return if $hour != 0;
+   #my $hour = (localtime)[2];
+   #return if $hour != 18;# for test? after test - 
    warn "_clean_stat";
 
    # check date of clean
-   my $day = sprintf '%02d', (localtime)[3];
-   my $date_clean = $self->__check_date_of_clean();
-   return if !$date_clean || $date_clean =~ /^\d\d\d\d-\d\d\-$day/;
+   #my $day = sprintf '%02d', (localtime)[3];
+   #my $date_clean = $self->__check_date_of_clean();
+   #return if $date_clean && $date_clean =~ /^\d\d\d\d-\d\d\-$day/;
+   warn "Start\n";
 
    # clean stat
    $self->__clean_stat();
@@ -536,17 +573,41 @@ sub _clean_stat {
    my $date_count = $self->__count_for_today();
 
    # save stat by today
-   $self->_save_searcher_stat( $_, $date_count->{ $_ } )
+   $self->__save_searcher_stat( $_, $date_count->{ $_ } )
       foreach keys %$date_count;
 
    # mark clean
-   $self->__mark_clean_stat();
+   #$self->__mark_clean_stat();# clean by cron, not need save date of cleaning
+}
+
+##########################
+sub __save_searcher_stat {
+   my $self = shift;
+   my ($searcher_id, $count) = @_;
+   return 0 if $searcher_id && $count;
+
+
+   # save searcher stat
+   my $query = qq!
+INSERT tv_window_searcher_stat (searcher, stat)
+VALUES(?,?)
+ON DUPLICATE KEY UPDATE stat = ?
+   !;
+   my $sth = $self->dbh->prepare( $query )
+      || die 'Dont connect to mysql: '. $self->dbh->errstr .'. '. $query;
+
+   $sth->execute(
+      $searcher_id,
+      $count,
+      $count,
+   ) || die 'Dont connect to mysql: '. $sth->errstr .'. '. $query;
+
 }
 
 ##################
-sub __check_date_of_clean {
+sub __check_date_of_clean {# not need
    my $self = shift;
-   my $query_check = qq!SELECT clean_date FROM tv_window_mark_cleaning WHERE table = 'stat'!;
+   my $query_check = qq!SELECT clean_date FROM tv_window_mark_cleaning WHERE tbl_name = 'stat'!;
    my $sth = $self->dbh->prepare( $query_check )
       || die 'Dont connect to mysql: '. $self->dbh->errstr .'. '. $query_check;
    $sth->execute()
@@ -584,16 +645,19 @@ sub __count_for_today {
 }
 
 ##################
-sub __mark_clean_stat {
+sub __mark_clean_stat {# not need
    my $self = shift;
+   my $tbl_name = shift;
+   return unless $tbl_name;
+
    my $query_mark  = qq!
-INSERT INTO tv_window_mark_cleaning (table, clean_date)
-VALUES(stat, NOW())
+INSERT INTO tv_window_mark_cleaning (tbl_name, clean_date)
+VALUES(?, NOW())
 ON DUPLICATE KEY UPDATE clean_date = NOW()
    !;
    my $sth = $self->dbh->prepare($query_mark)
       || die 'Dont connect to mysql: '. $self->dbh->errstr .'. '. $query_mark;
-   $sth->execute()
+   $sth->execute( $tbl_name )
       || die 'Dont connect to mysql: '. $sth->errstr       .'. '. $query_mark;
 }
 

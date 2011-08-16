@@ -1,6 +1,68 @@
 Здесь напишем как устанавливать наш скрипт и его интерфейс, как плодить таблички и какие и где должны быть обозначены права
 
-Код вставки счётчика
-<script>// tv_window
-( new Image() ).src = 'http://www.your_site.ru/cgi-bin/tv_window/people_request.pl?rnd='+ Math.round(Math.random() * 9999999) +'&r='+ encodeURIComponent(document.referrer);
-</script>
+
+
+Установка
+
+1. Зайти по ssh на ваш хостинг
+
+2. Скачать файлы из репозитория
+# mkdir ~/tmp
+# cd ~/tmp
+# git clone git@github.com:b-s-v/tv_window.git tv_window
+
+3. Переписать файлы на свои места
+# cd ./tv_window/
+# cp -r www/tv_window ~/your_site.ru/www/
+# cp -r cgi-bin/tv_window ~/your_site.ru/cgi-bin/
+
+4. Отредактировать файл конфигурации ~/your_site.ru/cgi-bin/tv_window/etc/tv_window.conf
+   a) Доступ кdb_type      = mysql
+      db_host      = localhost
+      db_port      = 3336
+      db_name      = tv_window
+      db_login     = tv_window
+      db_password  = tv_window
+
+   b) Необходимость чистить статистику по браузерам базе данных
+      auto_clean   = 0
+
+   c) Кодировку страницы
+      page_charset = UTF8
+
+   d) Минимальное количество рефереров, хранимае в таблице (можно оставить то, что есть)
+      offset       = 20
+
+5. Стереть репозиторий
+# rm -rf ~/tmp/tv_window
+
+6. Добавить в крон задание по очистке таблиц в базе данных
+MAILTO=feanor99@mail.ru
+
+0 1 * * * perl $HOME/your_site.ru/cgi-bin/tv_window/people_request.pl -c >> $HOME/logs/tv_window.log
+
+7. Добавить таблицы в базу данных
+# mysql --host=your_host --user=your_user --password=your_password your_db_name
+CREATE TABLE tv_window (
+   id       int(15) unsigned NOT NULL auto_increment,
+   searcher int(2) NOT NULL,
+   request  text NOT NULL,
+   date     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+   PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE tv_window_searcher_stat (
+   searcher int(2) NOT NULL,
+   stat     int(10),
+   UNIQUE  (searcher)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+8. Расставить счётчики по вашим сайтам, рефереры которых нам так нужны
+<script>( new Image() ).src = 'http://www.your_site.ru/cgi-bin/tv_window/people_request.pl?rnd='+ Math.round(Math.random() * 9999999) +'&r='+ encodeURIComponent(document.referrer);</script>
+
+9. Открыть страничку и проверить правильность установки
+http://your_site.ru/tv_window/
+
+10. Перенести код из html-файла в нужное вам место на вашем сайте!
+
