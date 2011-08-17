@@ -4,7 +4,6 @@ use strict;
 use CGI qw(:cgi);
 use FindBin qw($Bin);
 use lib "$Bin/lib";
-#use CGI::Carp 'fatalsToBrowser';
 use Getopt::Std;
 
 # Cleaning
@@ -100,7 +99,6 @@ package AObject;
 use strict;
 use DBI;
 use Convert::Cyrillic;
-#use CGI::Carp 'fatalsToBrowser';
 
 ##########################
 sub new {
@@ -195,7 +193,7 @@ package Inside;
 use base qw(AObject);
 
 use strict;
-use Data::Dumper qw(Dumper);
+#use Data::Dumper qw(Dumper);
 
 ##########################
 sub _init {
@@ -343,7 +341,7 @@ use Lingua::DetectCharset;
 use Convert::Cyrillic;
 use Encode;
 use utf8;
-use Data::Dumper qw(Dumper);
+#use Data::Dumper qw(Dumper);
 
 =pod
 CREATE TABLE tv_window (
@@ -370,6 +368,18 @@ CREATE TABLE tv_window_mark_cleaning (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8
 
 =cut
+
+##########################
+sub _init {
+   my $self = shift;
+
+   $self->SUPER::_init;
+
+   my ( $searcher, $request ) = $self->_parse_referrer();
+   #warn "[$searcher], [$request]\n";
+   $self->{ searcher } = $searcher;
+   $self->{ request  } = $request;
+}
 
 
 ##########################
@@ -456,18 +466,6 @@ sub _get_exists_searcher_stat {
 }
 
 ##########################
-sub _init {
-   my $self = shift;
-
-   $self->SUPER::_init;
-
-   my ( $searcher, $request ) = $self->_parse_referrer();
-   #warn "[$searcher], [$request]\n";
-   $self->{ searcher } = $searcher;
-   $self->{ request  } = $request;
-}
-
-##########################
 sub _parse_referrer {
    my $self = shift;
    my ($s, $r) = ('','');
@@ -496,7 +494,7 @@ sub _parse_referrer {
    #utf8::decode( $r );
    $r = $self->change_encoding( $r, 'utf8' );
    $r =~ s/\+/ /g;
-   #warn "r [$r] s [$s]\n";
+   warn "r [$r] s [$s] [$self->{ input }]\n" if $r =~ /^\d+$/;# for search only digital request!
 
    return $s, $r;
 }
@@ -513,7 +511,7 @@ package Cleaning;                                         # DONE
 use base qw(AObject);
 
 use strict;
-use Data::Dumper qw(Dumper);
+#use Data::Dumper qw(Dumper);
 
 
 
@@ -539,10 +537,17 @@ sub _clean_request {
    $sth_max->finish;
    return unless $max_id;
 
+=pod
    my $query = qq!
 DELETE FROM tv_window
 WHERE date < DATE_SUB(NOW(), INTERVAL 24 HOUR)
 AND id < (? - ?)
+   !;
+=cut
+   my $query = qq!
+DELETE
+FROM tv_window
+WHERE DATE_FORMAT(date, '%Y-%m-%d') <> CURDATE()
    !;
    my $sth = $self->dbh->prepare($query)
       || die 'Dont connect to mysql: '. $self->dbh->errstr .'. '. $query;
@@ -558,13 +563,13 @@ sub _clean_stat {
    # check time
    #my $hour = (localtime)[2];
    #return if $hour != 18;# for test? after test - 
-   warn "_clean_stat";
+   #warn "_clean_stat";
 
    # check date of clean
    #my $day = sprintf '%02d', (localtime)[3];
    #my $date_clean = $self->__check_date_of_clean();
    #return if $date_clean && $date_clean =~ /^\d\d\d\d-\d\d\-$day/;
-   warn "Start\n";
+   #warn "Start\n";
 
    # clean stat
    $self->__clean_stat();
