@@ -474,6 +474,7 @@ sub _parse_referrer {
    #warn "referrer [$referrer]\n";
 
    $referrer = uri_unescape( $referrer ) if $referrer;
+   #$referrer =~ s/#.+$//;# nedd or not need? :)
    #warn "referrer #[$referrer]#\n";
 
    # search SEARCHER
@@ -486,7 +487,7 @@ sub _parse_referrer {
 
    # search REQUEST
    my $rq = $self->{ searcher_dict }->{ $s }{ get_name };
-   my $qr = qr#$rq=([^&]+)&?#;
+   my $qr = qr#\b$rq=([^&]+)&?#;# \b or (?:\?|\&)
    #warn "rq [$rq] qr [$qr]\n";
 
    $r = $1 if $referrer =~ /$qr/;
@@ -562,7 +563,7 @@ sub _clean_stat {
 
    # check time
    #my $hour = (localtime)[2];
-   #return if $hour != 18;# for test? after test - 
+   #return if $hour != 18;# for test? after test -
    #warn "_clean_stat";
 
    # check date of clean
