@@ -549,6 +549,7 @@ AND id < (? - ?)
 DELETE
 FROM tv_window
 WHERE DATE_FORMAT(date, '%Y-%m-%d') <> CURDATE()
+AND id < (? - ?)
    !;
    my $sth = $self->dbh->prepare($query)
       || die 'Dont connect to mysql: '. $self->dbh->errstr .'. '. $query;
@@ -590,7 +591,7 @@ sub _clean_stat {
 sub __save_searcher_stat {
    my $self = shift;
    my ($searcher_id, $count) = @_;
-   return 0 if $searcher_id && $count;
+   return 0 unless $searcher_id && $count;
 
 
    # save searcher stat
